@@ -30,10 +30,12 @@ edpm_nodes:
       ansibleHost: {{ node_nets.networks.ctlplane.ip_v4 }}
     networks:
     {% for net in node_nets.networks.keys() %}
-      - defaultRoute: true
-        fixedIP: {{ node_nets.networks[net].ip_v4 }}
+      - fixedIP: {{ node_nets.networks[net].ip_v4 }}
         name: {{ net }}
         subnetName: subnet1
+{% if net == 'ctlplane' %}
+        defaultRoute: true
+{% endif %}
     {% endfor %}
     {% endfor %}
   {% for networker in _vm_groups['osp-networkers'] | default([]) %}
