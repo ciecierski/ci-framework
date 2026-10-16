@@ -1,0 +1,27 @@
+---
+# Minimal adoption layout for management-OCP-only lab deploys.
+# Used via cifmw_adoption_scenario_path in va-hci-mgmt-ocp-only.yml so
+# create-infra does not allocate OSP undercloud/controller/compute disks.
+#
+# controller-0 must stay (amount >= 1): networking-definition.yml hardcodes
+# instances.controller-0, and create-infra's prepare_networking maps it into
+# interfaces-info + utility DNS.
+
+libvirt_manager_patch_layout:
+  vms:
+    compute:
+      amount: 0
+    controller:
+      amount: 1
+      memory: 2
+      cpus: 1
+      disksize: 20
+
+# Keep stock external VLAN fix (base networking-definition has vlan 22 on both
+# tenant and external).
+networking_mapper_definition_patch:
+  networks:
+    external:
+      network: "10.0.0.0/24"
+      vlan: 44
+      mtu: 1496

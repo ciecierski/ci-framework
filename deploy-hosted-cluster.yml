@@ -1,0 +1,44 @@
+---
+# Entry point to deploy only the KubeVirt hosted control plane on an
+# already-running management OpenShift cluster (e.g. after create-infra.yml
+# + deploy-ocp.yml). Installs CNV/MCE/MetalLB/NMState as needed, prepares
+# management networking, creates the HostedCluster, maps worker NICs, and
+# retargets cifmw_openshift_kubeconfig at the guest.
+#
+# Does not provision libvirt VMs or the management OCP cluster.
+#
+# cifmw_openshift_kubeconfig must point at the MANAGEMENT cluster.
+# Also required: cifmw_networking_env_definition (normally loaded from
+# /etc/ci/env/networking-environment-definition.yml),
+# cifmw_hosted_cluster_kubeapi_address_pool, and
+# cifmw_hosted_cluster_management_interface.
+#
+# Example (hypervisor, after deploy-ocp):
+#
+#   MGMT_KUBECONFIG=~/src/github.com/openshift-metal3/dev-scripts/ocp/*/auth/kubeconfig
+#   ansible-playbook deploy-hosted-cluster.yml \
+#     -e cifmw_openshift_kubeconfig="$(echo $MGMT_KUBECONFIG)" \
+#     -e @scenarios/reproducers/va-hci-hosted-cluster-lab.yml \
+#     --flush-cache
+#
+# Tear down HCP only (keep mgmt OCP + operators):
+#   ansible-playbook cleanup-hosted-cluster.yml \
+#     -e cifmw_openshift_kubeconfig=... \
+#     -e @scenarios/reproducers/va-hci-hosted-cluster-lab.yml \
+#     --flush-cache
+#
+# See docs/source/usage/15_hosted_cluster_lab.md
+
+- name: Deploy KubeVirt hosted control plane
+  hosts: "{{ cifmw_target_host | default('localhost') }}"
+  gather_facts: true
+  # Standalone entry: full cifmw_setup / va-common.yml is not loaded, so set
+  # the globals the hosted_cluster role expects (PATH for oc, basedir for
+  # artifacts). Override via -e if needed.
+  vars:
+    cifmw_basedir: "{{ ansible_user_dir }}/ci-framework-data"
+    cifmw_path: "{{ ansible_user_dir }}/bin:{{ ansible_env.PATH }}"
+  tasks:
+    - name: Deploy hosted cluster on the management OpenShift
+      ansible.builtin.include_role:
+        name: hosted_cluster

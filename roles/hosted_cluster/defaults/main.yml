@@ -267,15 +267,20 @@ cifmw_hosted_cluster_metallb_operator_cr:
 # IPAM -- see roles/hosted_cluster/README.md for the full architecture.
 cifmw_hosted_cluster_nmstate_namespace: openshift-nmstate
 
-# The NMState Operator's CSV only supports the AllNamespaces install mode,
-# like metallb-operator above.
+# OwnNamespace only -- AllNamespaces fails with "AllNamespaces InstallModeType
+# not supported" (same pattern as roles/ci_nmstate/defaults/main.yml). MetalLB
+# is the opposite (AllNamespaces-only); do not copy its empty spec here.
 cifmw_hosted_cluster_nmstate_olm_operator_group:
   apiVersion: operators.coreos.com/v1
   kind: OperatorGroup
   metadata:
+    annotations:
+      olm.providedAPIs: NMState.v1.nmstate.io
     name: "{{ cifmw_hosted_cluster_nmstate_namespace }}"
     namespace: "{{ cifmw_hosted_cluster_nmstate_namespace }}"
-  spec: {}
+  spec:
+    targetNamespaces:
+      - "{{ cifmw_hosted_cluster_nmstate_namespace }}"
 
 cifmw_hosted_cluster_nmstate_olm_subscription:
   apiVersion: operators.coreos.com/v1alpha1

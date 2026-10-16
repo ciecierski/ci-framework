@@ -4,7 +4,7 @@
 # MetalLB resources) while leaving the management cluster -- and the
 # OpenShift Virtualization/MCE/MetalLB operators and storage class
 # hosted_cluster installed on it -- intact. This makes it cheap to
-# iterate: run this, then re-run the deploy (e.g. hosted.sh) to recreate
+# iterate: run this, then re-run deploy-hosted-cluster.yml to recreate
 # the hosted cluster without reprovisioning the management cluster.
 #
 # cifmw_openshift_kubeconfig must point at the MANAGEMENT cluster, not
@@ -13,10 +13,16 @@
 # running this as a separate invocation after a deploy, pass it (and
 # cifmw_openshift_context/_token if needed) explicitly, e.g.:
 #
-#   ansible-playbook cleanup-hosted-cluster.yml -i inventory.yml \
-#     -e cifmw_target_host=localhost \
+#   ansible-playbook cleanup-hosted-cluster.yml \
 #     -e cifmw_openshift_kubeconfig=<path to the management kubeconfig> \
-#     -e @custom/hosted.yml --flush-cache
+#     -e @scenarios/reproducers/va-hci-hosted-cluster-lab.yml \
+#     --flush-cache
+#
+# Deploy counterpart:
+#   ansible-playbook deploy-hosted-cluster.yml \
+#     -e cifmw_openshift_kubeconfig=<path to the management kubeconfig> \
+#     -e @scenarios/reproducers/va-hci-hosted-cluster-lab.yml \
+#     --flush-cache
 #
 # cleanup.yml fails loudly instead of silently no-op'ing if the
 # HostedCluster isn't found where expected, to catch exactly that
@@ -24,6 +30,10 @@
 
 - name: Cleanup KubeVirt hosted control plane
   hosts: "{{ cifmw_target_host | default('localhost') }}"
+  gather_facts: true
+  vars:
+    cifmw_basedir: "{{ ansible_user_dir }}/ci-framework-data"
+    cifmw_path: "{{ ansible_user_dir }}/bin:{{ ansible_env.PATH }}"
   tasks:
     - name: Remove the HostedCluster and its resources
       ansible.builtin.include_role:

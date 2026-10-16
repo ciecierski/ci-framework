@@ -1,0 +1,42 @@
+---
+# Lab overlay: management OCP only for HCI / hosted-cluster work on a
+# constrained host (~128 GiB RAM). Use with create-infra.yml + deploy-ocp.yml.
+#
+#   ansible-playbook create-infra.yml \
+#     -e @scenarios/reproducers/networking-definition.yml \
+#     -e @scenarios/reproducers/va-hci.yml \
+#     -e @scenarios/reproducers/va-hci-mgmt-ocp-only.yml \
+#     -e @<secrets> --flush-cache
+#
+#   ansible-playbook deploy-ocp.yml \
+#     -e @scenarios/reproducers/networking-definition.yml \
+#     -e @scenarios/reproducers/va-hci.yml \
+#     -e @scenarios/reproducers/va-hci-mgmt-ocp-only.yml \
+#     -e @<secrets> --flush-cache
+#
+# Then HCP: deploy-hosted-cluster.yml + va-hci-hosted-cluster-lab.yml
+
+# create-infra/deploy-ocp load scenarios/adoption/<name>.yml (or this path).
+# Must be "hci" — "hci-adoption" is the architecture stage name, not an
+# adoption scenario file. Lab adoption dir omits OSP 17.1 VMs.
+cifmw_architecture_scenario: hci
+# pre.yml sets playbook_dir to playbooks/adoption/ — go up to repo root.
+cifmw_adoption_scenario_path: >-
+  {{ (playbook_dir, '../..', 'scenarios/reproducers/mgmt-ocp-only-adoption')
+     | path_join }}
+
+cifmw_run_tests: false
+
+# Nested virt for future CNV/HCP on this mgmt cluster
+cifmw_devscripts_cpu_passthrough: true
+
+# ocp_layout_assertions require: amount>=3, cpus>=10, disksize>50, uefi=true.
+cifmw_libvirt_manager_configuration_patch_mgmt_only:
+  vms:
+    ocp:
+      amount: 3
+      memory: 20
+      cpus: 10
+      disksize: "60"
+      extra_disks_num: 2
+      extra_disks_size: "40G"

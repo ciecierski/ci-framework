@@ -1,0 +1,39 @@
+---
+# Lab overlay for deploy-hosted-cluster.yml after va-hci-mgmt-ocp-only OCP.
+# Sized for ~128 GiB / 24 CPU hosts. Verify management_interface and LVMS
+# disks on the live cluster before running.
+#
+#   MGMT_KC=$(echo ~/src/github.com/openshift-metal3/dev-scripts/ocp/*/auth/kubeconfig)
+#   ansible-playbook deploy-hosted-cluster.yml \
+#     -e cifmw_openshift_kubeconfig="$MGMT_KC" \
+#     -e @scenarios/reproducers/va-hci-hosted-cluster-lab.yml \
+#     --flush-cache
+
+cifmw_deploy_hosted_cluster: true
+cifmw_edpm_deploy_baremetal: false
+
+# Required: physical NIC on mgmt OCP nodes for isolated-network bridges.
+# Discover: oc debug node/<master> -- chroot /host ip -br link
+cifmw_hosted_cluster_management_interface: enp6s0
+
+cifmw_hosted_cluster_networks:
+  - ctlplane
+  - internalapi
+  - storage
+  - tenant
+
+cifmw_hosted_cluster_kubeapi_address_pool:
+  - 192.168.111.50-192.168.111.60
+
+cifmw_hosted_cluster_kubeapi_interface: br-ex
+
+# Mgmt-node disks for HCP etcd / KubeVirt root volumes (ci_lvms_storage).
+# Must match free extra disks from va-hci-mgmt-ocp-only (often /dev/vdb).
+cifmw_hosted_cluster_lvms_disk_list:
+  - /dev/vdb
+
+cifmw_hosted_cluster_map_infra_storage_class: true
+
+cifmw_hosted_cluster_worker_count: 3
+cifmw_hosted_cluster_worker_cores: 4
+cifmw_hosted_cluster_worker_memory: 8Gi
